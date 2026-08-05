@@ -562,6 +562,18 @@ button { font: inherit; color: inherit; }
 }
 
 .foot__note { max-width: 62ch; }
+
+/* Дубль дисклеймера внутри титульного экрана: показывается только на
+   телефоне, где подвал скрыт ради полноэкранной игры. */
+.foot__note--inline {
+  display: none;
+  margin: var(--gap-3) 0 0;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--ink-40);
+  max-width: 34ch;
+}
+.foot__note--inline b { color: var(--ink); font-weight: 400; }
 .foot b { font-weight: 400; color: var(--ink); }
 
 /* --------------------------------------------------------------------------
@@ -569,46 +581,67 @@ button { font: inherit; color: inherit; }
    -------------------------------------------------------------------------- */
 
 @media (max-width: 700px) {
+  /* Игра занимает весь экран: ни полей, ни рамки, ни подвала.
+     Нижние 45% — тёмный пол, на нём реплики и кнопки, каждый на своём
+     месте и без наложений. */
   body {
-    justify-content: flex-start;
-    padding: var(--gap-1);
-    gap: var(--gap-1);
+    padding: 0;
+    gap: 0;
     min-height: 100dvh;
+    justify-content: flex-start;
   }
 
-  /* Рамка вытягивается на всю доступную высоту, а канвас подстраивает
-     под неё свои пропорции — пустых полос сверху и снизу больше нет.
-     Вычитаем ряд кнопок и подвал. */
   .stage {
-    width: 100%;
+    width: 100vw;
+    height: 100dvh;
     aspect-ratio: auto;
-    /* Не выше чем 1.25 ширины: на длинном экране рамка иначе вытягивается
-       так, что сверху остаётся полоса пустого воздуха. */
-    height: min(calc(100dvh - 250px), calc(100vw * 1.25));
-    min-height: 380px;
     max-height: none;
+    min-height: 0;
+    border: none;
+    box-shadow: none;
   }
 
-  .screen { padding: var(--gap-2); }
-  .screen__title { max-width: 11ch; font-size: clamp(28px, 11vw, 52px); }
-  .screen__sub { font-size: 16px; max-width: 30ch; }
+  .foot { display: none; }
+  .foot__note--inline { display: block; }
+
+  .screen { padding: var(--gap-2) var(--gap-2) calc(var(--gap-2) * 2); }
+  .screen__title { max-width: 11ch; font-size: clamp(30px, 12vw, 56px); }
+  .screen__sub { font-size: 16px; max-width: 32ch; }
   .screen__kicker { font-size: 10px; }
   .screen__actions { gap: var(--gap-1); }
   .screen__actions .btn { flex: 1 1 100%; }
-
   .choices .btn { flex: 1 1 100%; }
-  .dialogue { left: var(--gap-1); right: var(--gap-1); bottom: var(--gap-1); }
+
+  /* Реплика лежит на полу, кнопки — под ней, у самого низа экрана. */
+  .dialogue {
+    left: var(--gap-1);
+    right: var(--gap-1);
+    bottom: calc(var(--px) * 26);
+  }
+
   .dialogue__text { min-height: calc(var(--lh-body) * 4em); }
-
   .hud__items { max-width: 100%; }
-
-  .foot { width: 100%; font-size: 11px; line-height: 1.2; gap: var(--px); }
   .result { grid-template-columns: 1fr; }
+
+  .touch {
+    position: fixed;
+    left: var(--gap-1);
+    right: var(--gap-1);
+    bottom: var(--gap-1);
+    width: auto;
+    z-index: 7;
+  }
+
+  .touch button {
+    width: calc(var(--px) * 24);
+    height: calc(var(--px) * 19);
+    background: rgba(241, 241, 249, .92);
+  }
 }
 
-/* Совсем низкие экраны в альбомной ориентации: рамке отдаём почти всё */
-@media (max-width: 700px) and (orientation: landscape) {
-  .stage { height: calc(100dvh - 150px); min-height: 220px; }
+/* Альбомная ориентация на телефоне: пол занимает меньше, сцена шире */
+@media (max-width: 900px) and (orientation: landscape) {
+  .dialogue { bottom: calc(var(--px) * 24); }
 }
 
 @media (prefers-reduced-motion: reduce) {

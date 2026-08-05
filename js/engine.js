@@ -11,7 +11,8 @@ var Engine = (function () {
      всю рамку, а не висит полоской посередине. */
   var BASE_W = 960, BASE_H = 540;
   var VW = BASE_W, VH = BASE_H;
-  var voff = 0;                     /* сдвиг мира вниз = VH - BASE_H */
+  var voff = 0;                     /* сдвиг мира вниз */
+  var GROUND_BAND = BASE_H - GROUND_Y;   /* высота тёмного пола в единицах мира */
 
   var canvas, ctx, level, cb;
   var raf = null, last = 0, paused = false;
@@ -339,7 +340,7 @@ var Engine = (function () {
      асфальт. Основной массив остаётся тёмным, иначе персонаж потеряется. */
   function drawGround(from, to) {
     ctx.fillStyle = C.ink;
-    ctx.fillRect(px(from), GROUND_Y, px(to - from), BASE_H - GROUND_Y);
+    ctx.fillRect(px(from), GROUND_Y, px(to - from), GROUND_BAND);
     if (P.floor) {
       ctx.fillStyle = P.floor;
       ctx.fillRect(px(from), GROUND_Y, px(to - from), 9);
@@ -833,10 +834,20 @@ var Engine = (function () {
       : { width: BASE_W, height: BASE_H };
     var w = box.width || BASE_W;
     var h = box.height || BASE_H;
+    var narrow = w < 700;
 
-    VW = w < 700 ? 620 : BASE_W;
-    VH = Math.round(Math.max(BASE_H, Math.min(1500, VW * (h / w))));
-    voff = VH - BASE_H;
+    /* На телефоне мир приближается (480 единиц по ширине вместо 960),
+       а линия земли поднимается на 55% высоты: нижние 45% экрана — тёмный
+       пол, на котором лежат реплики и кнопки, верхние — сама сцена. */
+    VW = narrow ? 480 : BASE_W;
+    VH = Math.round(Math.max(BASE_H, Math.min(1600, VW * (h / w))));
+
+    var groundOnScreen = narrow
+      ? Math.round(VH * 0.55)
+      : VH - (BASE_H - GROUND_Y);
+
+    voff = groundOnScreen - GROUND_Y;
+    GROUND_BAND = VH - voff - GROUND_Y;
 
     canvas.width = VW;
     canvas.height = VH;

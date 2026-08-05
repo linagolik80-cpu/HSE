@@ -30,6 +30,7 @@
     if (name) {
       UI.hideHud();
       Engine.pause(true);
+      $('touch').classList.remove('on');
       /* под титулом канвас продолжает рисовать персонажа, под остальными
          экранами рисовать нечего */
       Engine.scene(name === 'title' ? 'title' : 'none');
@@ -47,6 +48,7 @@
   function toPlay() {
     hideScreens();
     Engine.pause(false);
+    if (isTouch()) $('touch').classList.add('on');
   }
 
   /* ------------------------------------------------------------------ */
@@ -315,10 +317,6 @@
 
     /* Интро играет один раз при загрузке: фото превращается в персонажа,
        он падает в кадр — и мы уже на титульном экране. */
-    /* Ряд кнопок на сенсорных экранах показываем сразу и не прячем:
-       иначе рамка игры прыгала бы по высоте при каждом переходе. */
-    if (isTouch()) $('touch').classList.add('on');
-
     hideScreens();
     $('btnSkip').hidden = false;
     Engine.scene('intro', afterIntro);
