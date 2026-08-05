@@ -1,0 +1,206 @@
+/* ==========================================================================
+   ДИЗАЙН-СИСТЕМА
+   Ядро: один квадратный пиксельный модуль --px. От него считается всё:
+   отступы, рамки, тени, толщина полос. Скруглений нет нигде.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Chava';
+  src: url('../assets/fonts/chava.otf') format('opentype');
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Bricolage';
+  src: url('../assets/fonts/bricolage.ttf') format('truetype-variations');
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: block;
+}
+
+:root {
+  /* --- пиксельный модуль --- */
+  --px: 4px;
+  --gap-1: calc(var(--px) * 2);
+  --gap-2: calc(var(--px) * 4);
+  --gap-3: calc(var(--px) * 6);
+  --gap-4: calc(var(--px) * 10);
+
+  /* --- цвет --- */
+  --bg: #F1F1F9;
+  --ink: #2F2802;
+  --accent: #C63A02;
+  --hse: #102D69;
+  --ink-40: rgba(47, 40, 2, .4);
+  --ink-20: rgba(47, 40, 2, .2);
+  --ink-12: rgba(47, 40, 2, .12);
+  --ink-06: rgba(47, 40, 2, .06);
+
+  /* --- шрифты ---
+     Chava    — дисплейный, кириллица есть, знака ₽ нет.
+     Bricolage — только цифры, латиница и ₽: кириллицы в шрифте нет вообще.
+     Arial Narrow — весь русский текст. */
+  --font-display: 'Chava', 'Arial Black', sans-serif;
+  --font-num: 'Bricolage', 'Arial Narrow', Arial, sans-serif;
+  --font-body: 'Arial Narrow', 'Helvetica Neue Condensed',
+               'Liberation Sans Narrow', Arial, sans-serif;
+  --lh-body: .96;
+
+  /* --- рамки и тени --- */
+  --border: var(--px) solid var(--ink);
+  --shadow: calc(var(--px) * 2) calc(var(--px) * 2) 0 var(--ink);
+  --shadow-sm: var(--px) var(--px) 0 var(--ink);
+
+  /* --- сцена --- */
+  --scene-w: 960;
+  --scene-h: 540;
+}
+
+@media (max-width: 700px) {
+  :root { --px: 3px; }
+}
+
+/* --------------------------------------------------------------------------
+   Типографика
+   -------------------------------------------------------------------------- */
+
+.t-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+
+.t-num {
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+}
+
+.t-body {
+  font-family: var(--font-body);
+  line-height: var(--lh-body);
+  letter-spacing: .01em;
+}
+
+/* Номера уровней — Arial Narrow с плотным трекингом */
+.t-lvl {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   Супрграфика «семь пикселей»
+   Кластер из семи квадратов --px. Один элемент в четырёх ролях: разделитель,
+   маркер прогресса, искры при сборе предмета, фоновый паттерн.
+   -------------------------------------------------------------------------- */
+
+.seven {
+  display: inline-grid;
+  grid-template-columns: repeat(4, var(--px));
+  grid-template-rows: repeat(3, var(--px));
+  gap: var(--px);
+  flex: none;
+}
+
+.seven i {
+  background: var(--ink);
+  display: block;
+}
+
+.seven i:nth-child(1) { grid-area: 1 / 1; }
+.seven i:nth-child(2) { grid-area: 1 / 3; }
+.seven i:nth-child(3) { grid-area: 2 / 2; }
+.seven i:nth-child(4) { grid-area: 2 / 4; }
+.seven i:nth-child(5) { grid-area: 3 / 1; }
+.seven i:nth-child(6) { grid-area: 3 / 3; }
+.seven i:nth-child(7) { grid-area: 2 / 1; }
+
+.seven--accent i { background: var(--accent); }
+.seven--hse i    { background: var(--hse); }
+.seven--muted i  { background: var(--ink-20); }
+
+/* фоновый паттерн из того же модуля */
+.pattern {
+  background-image:
+    linear-gradient(90deg, var(--ink-06) var(--px), transparent var(--px)),
+    linear-gradient(var(--ink-06) var(--px), transparent var(--px));
+  background-size: calc(var(--px) * 6) calc(var(--px) * 6);
+}
+
+/* --------------------------------------------------------------------------
+   Кнопки
+   -------------------------------------------------------------------------- */
+
+.btn {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  font-size: clamp(13px, 1.5vw, 17px);
+  line-height: 1;
+  color: var(--ink);
+  background: var(--bg);
+  border: var(--border);
+  border-radius: 0;
+  padding: var(--gap-2) var(--gap-3);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform .06s steps(2), box-shadow .06s steps(2),
+              background-color .06s steps(2), color .06s steps(2);
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-1);
+}
+
+.btn:hover,
+.btn:focus-visible {
+  background: var(--accent);
+  color: var(--bg);
+  outline: none;
+}
+
+.btn:hover .seven i,
+.btn:focus-visible .seven i { background: var(--bg); }
+
+.btn:active {
+  transform: translate(var(--px), var(--px));
+  box-shadow: none;
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.btn--primary .seven i { background: var(--bg); }
+
+.btn--primary:hover,
+.btn--primary:focus-visible {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.btn--ghost {
+  box-shadow: none;
+  border-color: var(--ink-20);
+}
+
+.btn--ghost:hover,
+.btn--ghost:focus-visible { border-color: var(--ink); }
+
+/* --------------------------------------------------------------------------
+   Панель
+   -------------------------------------------------------------------------- */
+
+.panel {
+  background: var(--bg);
+  border: var(--border);
+  box-shadow: var(--shadow);
+}

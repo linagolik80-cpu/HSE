@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Три уровня — Ангелина Голик</title>
+<meta name="description" content="Интерактивный рассказ о себе в формате пиксельной игры. Учебный проект для поступления в магистратуру НИУ ВШЭ.">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<main class="stage" id="stage">
+  <canvas id="scene" width="960" height="540"></canvas>
+
+  <!-- HUD -->
+  <div class="hud" id="hud" hidden>
+    <div class="hud__level">
+      <span class="hud__num t-lvl" id="hudNum">01/03</span>
+      <span class="hud__title" id="hudTitle">Школа</span>
+      <span class="hud__progress" id="hudProgress"></span>
+    </div>
+    <div class="hud__items" id="hudItems"></div>
+    <span class="hud__spacer"></span>
+    <button class="hud__sound" id="soundBtn" type="button" aria-pressed="false">Звук выкл</button>
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <div class="toast" id="toast" hidden>
+    <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+    <span id="toastText"></span>
+  </div>
+
+  <!-- Диалоговая панель -->
+  <div class="dialogue" id="dialogue" hidden>
+    <div class="dialogue__head">
+      <span class="dialogue__who" id="dlgWho">Ангелина</span>
+      <span class="dialogue__rule"></span>
+    </div>
+    <p class="dialogue__text t-body" id="dlgText"></p>
+    <div class="choices" id="dlgChoices" hidden></div>
+    <div class="dialogue__foot">
+      <span class="dialogue__next" id="dlgNext">
+        <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        Дальше
+      </span>
+    </div>
+  </div>
+
+  <!-- Интро: кнопка пропуска -->
+  <button class="skip" id="btnSkip" type="button" hidden>Пропустить</button>
+
+  <!-- Титульный экран -->
+  <section class="screen screen--clear" id="scrTitle">
+    <p class="screen__kicker">
+      <span class="seven seven--accent"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      Ангелина Голик · интерактивное резюме
+    </p>
+    <h1 class="screen__title">Три<br>уровня</h1>
+    <p class="screen__sub">
+      Жизнь в маркетинге как игра: школа, бакалавриат и своё дело.
+      Три уровня, препятствия и один незакрытый босс.
+      Прохождение — около <span class="t-num">9</span> минут.
+    </p>
+    <div class="screen__actions">
+      <button class="btn btn--primary" id="btnStart" type="button">
+        <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        Начать игру
+      </button>
+      <button class="btn btn--ghost" id="btnHelp" type="button">Управление</button>
+      <button class="btn btn--ghost" id="btnPick" type="button">Выбрать уровень</button>
+    </div>
+  </section>
+
+  <!-- Карточка уровня -->
+  <section class="screen card" id="scrCard" hidden>
+    <span class="card__num t-lvl" id="cardNum">01</span>
+    <h2 class="screen__title" id="cardTitle"></h2>
+    <p class="screen__sub" id="cardSub"></p>
+    <div class="screen__actions">
+      <button class="btn btn--primary" id="cardGo" type="button">
+        <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        Поехали
+      </button>
+    </div>
+  </section>
+
+  <!-- Управление -->
+  <section class="screen" id="scrHelp" hidden>
+    <p class="screen__kicker">
+      <span class="seven seven--accent"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      Как играть
+    </p>
+    <h2 class="screen__title">Управление</h2>
+    <p class="screen__sub">
+      <b>← →</b> или <b>A D</b> — идти.<br>
+      <b>Пробел</b> или <b>↑</b> — прыжок.<br>
+      <b>Enter</b> или клик по панели — листать реплики.<br>
+      На телефоне — три кнопки внизу экрана.<br><br>
+      Проиграть нельзя: после столкновения персонаж просто возвращается
+      к последнему чекпоинту.
+    </p>
+    <div class="screen__actions">
+      <button class="btn btn--primary" id="helpBack" type="button">Назад</button>
+    </div>
+  </section>
+
+  <!-- Выбор уровня -->
+  <section class="screen" id="scrPick" hidden>
+    <p class="screen__kicker">
+      <span class="seven seven--accent"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      Навигация
+    </p>
+    <h2 class="screen__title">Выбор уровня</h2>
+    <div class="screen__actions" id="pickList"></div>
+    <div class="screen__actions" style="margin-top:var(--gap-2)">
+      <button class="btn btn--ghost" id="pickBack" type="button">На титул</button>
+    </div>
+  </section>
+
+  <!-- Финал -->
+  <section class="screen screen--hse" id="scrEnd" hidden>
+    <p class="screen__kicker">
+      <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      Игра пройдена · <span class="t-lvl">03/03</span>
+    </p>
+    <h2 class="screen__title">Итоги</h2>
+    <div class="result">
+      <div class="result__box">
+        <h3 class="result__h">
+          <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          Прокачано
+        </h3>
+        <div id="endSkills"></div>
+      </div>
+      <div class="result__box">
+        <h3 class="result__h">
+          <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          Собрано за игру
+        </h3>
+        <ul class="gap-list" id="endItems"></ul>
+      </div>
+      <div class="result__box">
+        <h3 class="result__h">
+          <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          Закрывает магистратура
+        </h3>
+        <ul class="gap-list" id="endGaps"></ul>
+      </div>
+    </div>
+    <p class="screen__sub" id="endLine"></p>
+    <div class="screen__actions">
+      <a class="btn btn--primary" id="endMail" href="mailto:linagolik80@gmail.com?subject=%D0%9F%D0%BE%D1%81%D1%82%D1%83%D0%BF%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%B2%20%D0%BC%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%82%D1%83%D1%80%D1%83">
+        <span class="seven"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        Написать мне
+      </a>
+      <button class="btn btn--ghost" id="endAgain" type="button">Пройти заново</button>
+      <button class="btn btn--ghost" id="endPick" type="button">Выбор уровня</button>
+    </div>
+  </section>
+
+  <!-- Тач-управление -->
+  <div class="touch" id="touch">
+    <div class="touch__side">
+      <button type="button" data-key="left" aria-label="Влево">←</button>
+      <button type="button" data-key="right" aria-label="Вправо">→</button>
+    </div>
+    <div class="touch__side">
+      <button type="button" data-key="jump" aria-label="Прыжок">↑</button>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <p class="foot__note">
+    <b>Сайт создан в учебных целях.</b>
+    Это личный проект-портфолио для поступления в магистратуру.
+    Не является официальным ресурсом НИУ ВШЭ или РЭУ им. Г. В. Плеханова;
+    логотип университета использован как элемент повествования.
+  </p>
+  <p class="foot__note">© <span class="t-num">2026</span> Ангелина Голик</p>
+</footer>
+
+<!-- Классические скрипты без модулей: страница должна открываться
+     двойным кликом с file:// так же, как и с сервера. -->
+<script src="assets/sprites/sprites.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/content.js"></script>
+<script src="js/intro.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

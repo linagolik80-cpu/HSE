@@ -1,0 +1,585 @@
+/* ==========================================================================
+   Игра: сцена, HUD, диалоги, экраны, адаптив
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-2);
+  padding: var(--gap-2);
+}
+
+button { font: inherit; color: inherit; }
+
+/* --------------------------------------------------------------------------
+   Сцена
+   Канвас с логическим разрешением 960x540 растягивается на .stage целиком,
+   image-rendering: pixelated сохраняет чёткость пиксель-арта.
+   -------------------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  width: min(calc(100vw - var(--gap-3)), calc((100vh - 110px) * 16 / 9), 1180px);
+  aspect-ratio: 16 / 9;
+  border: var(--border);
+  box-shadow: var(--shadow);
+  background: var(--bg);
+  overflow: hidden;
+  flex: none;
+  user-select: none;
+}
+
+#scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Канвас всегда 960x540. object-fit не даёт растянуть его по пропорциям
+     рамки — на узких экранах сцена вписывается, а не искажается. */
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* --------------------------------------------------------------------------
+   HUD
+   -------------------------------------------------------------------------- */
+
+.hud {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-2);
+  padding: var(--gap-2);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.hud[hidden] { display: none; }
+
+.hud__level {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-1);
+  background: var(--bg);
+  border: var(--px) solid var(--ink);
+  padding: calc(var(--px) * 1.5) var(--gap-1);
+}
+
+.hud__num {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(13px, 1.5vw, 18px);
+  color: var(--accent);
+}
+
+.hud__title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(10px, 1.2vw, 14px);
+  letter-spacing: .04em;
+}
+
+.hud__items {
+  display: flex;
+  gap: var(--px);
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 46%;
+}
+
+.chip {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(8px, .95vw, 11px);
+  letter-spacing: .03em;
+  padding: calc(var(--px) * 1.25) var(--gap-1);
+  border: var(--px) solid var(--accent);
+  color: var(--accent);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.chip--locked {
+  border-color: var(--ink-20);
+  color: var(--ink-40);
+}
+
+.chip--locked::before { content: '× '; }
+
+.hud__spacer { flex: 1 1 auto; }
+
+.hud__sound {
+  pointer-events: auto;
+  border: var(--px) solid var(--ink);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(9px, 1.1vw, 12px);
+  padding: calc(var(--px) * 1.5) var(--gap-1);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.hud__sound:hover { background: var(--accent); color: var(--bg); }
+
+/* полоса прогресса уровня из пиксельных сегментов */
+.hud__progress {
+  position: absolute;
+  left: var(--gap-2);
+  right: var(--gap-2);
+  bottom: calc(var(--gap-2) * -1 - var(--px) * 2);
+  display: flex;
+  gap: var(--px);
+  height: var(--px);
+}
+
+.hud__progress span {
+  flex: 1;
+  background: var(--ink-12);
+}
+
+.hud__progress span.on { background: var(--accent); }
+
+/* --------------------------------------------------------------------------
+   Диалоговая панель
+   -------------------------------------------------------------------------- */
+
+.dialogue {
+  position: absolute;
+  left: var(--gap-2);
+  right: var(--gap-2);
+  bottom: var(--gap-2);
+  background: var(--bg);
+  border: var(--border);
+  box-shadow: var(--shadow);
+  padding: var(--gap-2);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-1);
+  cursor: pointer;
+}
+
+.dialogue[hidden] { display: none; }
+
+.dialogue__head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-1);
+}
+
+.dialogue__who {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(9px, 1.1vw, 12px);
+  letter-spacing: .06em;
+  color: var(--accent);
+}
+
+.dialogue__rule {
+  flex: 1;
+  height: var(--px);
+  background: var(--ink-12);
+}
+
+.dialogue__text {
+  font-family: var(--font-body);
+  line-height: var(--lh-body);
+  letter-spacing: .01em;
+  font-size: clamp(15px, 1.85vw, 21px);
+  min-height: calc(var(--lh-body) * 3em);
+  margin: 0;
+}
+
+.dialogue__text b {
+  font-weight: 400;
+  color: var(--accent);
+  border-bottom: var(--px) solid var(--accent);
+}
+
+.dialogue__text .num {
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-size: .92em;
+}
+
+.dialogue__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-2);
+  min-height: calc(var(--px) * 5);
+}
+
+.dialogue__next {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(9px, 1vw, 11px);
+  letter-spacing: .04em;
+  color: var(--ink-40);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-1);
+}
+
+.dialogue__next[hidden] { visibility: hidden; display: flex; }
+
+@keyframes blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .15; } }
+.dialogue__next .seven { animation: blink 1s steps(1) infinite; }
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-1);
+}
+
+.choices[hidden] { display: none; }
+
+.choices .btn { flex: 1 1 40%; }
+
+/* --------------------------------------------------------------------------
+   Полноэкранные экраны: титул, карточка уровня, финал
+   -------------------------------------------------------------------------- */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.screen[hidden] { display: none; }
+
+/* Титул прозрачный: фон и персонажа рисует канвас под ним,
+   поэтому персонаж, упавший в конце интро, остаётся на месте. */
+.screen--clear {
+  background: transparent;
+  pointer-events: none;
+}
+
+.screen--clear .btn,
+.screen--clear .screen__actions { pointer-events: auto; }
+
+.screen--hse { background: var(--hse); color: var(--bg); }
+.screen--hse .seven i { background: var(--bg); }
+
+.screen__kicker {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(10px, 1.25vw, 14px);
+  letter-spacing: .08em;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-1);
+  margin-bottom: var(--gap-2);
+}
+
+.screen--hse .screen__kicker { color: var(--bg); }
+
+.screen__title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(30px, 6.2vw, 74px);
+  line-height: .92;
+  letter-spacing: .01em;
+  margin: 0 0 var(--gap-2);
+  max-width: 20ch;
+}
+
+.screen__sub {
+  font-family: var(--font-body);
+  line-height: var(--lh-body);
+  font-size: clamp(15px, 2vw, 22px);
+  max-width: 46ch;
+  margin: 0 0 var(--gap-3);
+}
+
+.screen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-1);
+  align-items: center;
+}
+
+/* Кнопка пропуска интро */
+.skip {
+  position: absolute;
+  right: var(--gap-2);
+  top: var(--gap-2);
+  z-index: 9;
+  border: var(--px) solid var(--ink);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: clamp(9px, 1.1vw, 12px);
+  line-height: 1;
+  padding: calc(var(--px) * 1.5) var(--gap-1);
+  cursor: pointer;
+}
+
+.skip[hidden] { display: none; }
+.skip:hover { background: var(--accent); color: var(--bg); }
+
+/* карточка уровня между этапами */
+.card {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.card__num {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -.04em;
+  font-size: clamp(48px, 12vw, 140px);
+  line-height: .82;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Заголовок уровня длинный, а Chava широкая — иначе вылезает за рамку */
+.card .screen__title {
+  font-size: clamp(22px, 4.4vw, 50px);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Финальный экран
+   -------------------------------------------------------------------------- */
+
+.result {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--gap-2);
+  margin-bottom: var(--gap-3);
+}
+
+.result__box {
+  border: var(--px) solid var(--ink-20);
+  padding: var(--gap-2);
+}
+
+.screen--hse .result__box { border-color: rgba(241, 241, 249, .35); }
+
+.result__h {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(10px, 1.2vw, 13px);
+  letter-spacing: .06em;
+  margin: 0 0 var(--gap-2);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-1);
+}
+
+.skill {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--gap-1);
+  margin-bottom: var(--gap-1);
+  font-family: var(--font-body);
+  font-size: clamp(14px, 1.6vw, 17px);
+  line-height: var(--lh-body);
+}
+
+.skill__bar {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--px);
+  height: calc(var(--px) * 2);
+  margin-bottom: var(--gap-1);
+}
+
+.skill__bar i { flex: 1; background: rgba(241, 241, 249, .25); }
+.skill__bar i.on { background: var(--bg); }
+
+.screen:not(.screen--hse) .skill__bar i { background: var(--ink-12); }
+.screen:not(.screen--hse) .skill__bar i.on { background: var(--accent); }
+
+.gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: clamp(14px, 1.6vw, 17px);
+  line-height: var(--lh-body);
+}
+
+.gap-list li {
+  display: flex;
+  gap: var(--gap-1);
+  align-items: flex-start;
+  margin-bottom: var(--gap-1);
+}
+
+.gap-list li::before {
+  content: '';
+  width: var(--px);
+  height: var(--px);
+  background: currentColor;
+  margin-top: .5em;
+  flex: none;
+}
+
+/* --------------------------------------------------------------------------
+   Экранные кнопки для тач-устройств
+   -------------------------------------------------------------------------- */
+
+.touch {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: none;
+  justify-content: space-between;
+  padding: var(--gap-2);
+  gap: var(--gap-2);
+  z-index: 6;
+  pointer-events: none;
+}
+
+.touch.on { display: flex; }
+
+.touch__side { display: flex; gap: var(--gap-1); }
+
+.touch button {
+  pointer-events: auto;
+  width: calc(var(--px) * 15);
+  height: calc(var(--px) * 15);
+  border: var(--px) solid var(--ink);
+  background: rgba(241, 241, 249, .82);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(14px, 3vw, 20px);
+  line-height: 1;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch button:active { background: var(--accent); color: var(--bg); }
+
+/* --------------------------------------------------------------------------
+   Всплывающая плашка «предмет получен»
+   -------------------------------------------------------------------------- */
+
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  z-index: 7;
+  background: var(--accent);
+  color: var(--bg);
+  border: var(--px) solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  padding: var(--gap-1) var(--gap-2);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(11px, 1.4vw, 15px);
+  letter-spacing: .04em;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-1);
+  animation: toast-in .3s steps(3);
+}
+
+.toast[hidden] { display: none; }
+.toast .seven i { background: var(--bg); }
+
+@keyframes toast-in {
+  from { transform: translate(-50%, calc(var(--px) * -4)); opacity: 0; }
+  to   { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* красная вспышка при столкновении */
+.flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.flash.on { animation: flash .34s steps(2); }
+
+@keyframes flash {
+  0%   { opacity: .5; }
+  100% { opacity: 0; }
+}
+
+/* --------------------------------------------------------------------------
+   Подвал
+   -------------------------------------------------------------------------- */
+
+.foot {
+  width: min(calc(100vw - var(--gap-3)), 1180px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-1) var(--gap-2);
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-body);
+  font-size: clamp(11px, 1.25vw, 14px);
+  line-height: 1.25;
+  color: var(--ink-40);
+  flex: none;
+}
+
+.foot__note { max-width: 62ch; }
+.foot b { font-weight: 400; color: var(--ink); }
+
+/* --------------------------------------------------------------------------
+   Адаптив
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  body { justify-content: flex-start; padding: var(--gap-1); gap: var(--gap-1); }
+
+  .stage {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    max-height: calc(100vh - 150px);
+  }
+
+  .screen__title { max-width: 14ch; }
+  .choices .btn { flex: 1 1 100%; }
+  .dialogue__text { min-height: calc(var(--lh-body) * 4em); }
+  .foot { width: 100%; font-size: 12px; }
+  .result { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogue__next .seven { animation: none; }
+  .toast { animation: none; }
+}
