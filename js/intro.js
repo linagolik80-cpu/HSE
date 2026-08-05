@@ -8,7 +8,6 @@
    ========================================================================== */
 
 var Intro = (function () {
-  var W = 960, H = 540;
 
   /* тайминги, секунды */
   var T_FRAME  = 0.55;   /* рамка прорисовалась            */
@@ -175,6 +174,13 @@ var Intro = (function () {
     frame: function (ctx, dt, C, drawBase) {
       if (finished) return true;
       t += dt;
+
+      /* Кадр может быть любой ширины — от вертикального телефона
+         до широкого монитора. Рамку держим по центру, а приземление
+         совмещаем с местом, где персонаж стоит на титульном экране. */
+      var view = Engine.view();
+      BOX.cx = Math.round(view.w / 2);
+      LAND_X = Math.round(view.w * 0.76);
 
       var img = Sprites.get('photo');
       drawBase();

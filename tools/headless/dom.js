@@ -50,6 +50,7 @@ var ctx2d = {
     this.globalAlpha = s.a; this.fillStyle = s.f;
   },
   translate: function (x, y) { tf.tx += x * tf.sx; tf.ty += y; },
+  setTransform: function (a, b, c, d, e, f) { tf.sx = a; tf.tx = e; tf.ty = f; },
   scale: function (x) { tf.sx *= x; },
 
   clearRect: function () {},
@@ -133,6 +134,12 @@ El.prototype.getAttribute = function (k) { return this.attrs[k]; };
 El.prototype.querySelectorAll = function () { return []; };
 El.prototype.closest = function () { return null; };
 El.prototype.getContext = function () { return ctx2d; };
+/* Размер рамки задаётся снаружи (VIEW_W/VIEW_H) — так можно снять кадр
+   в пропорциях телефона, а не только монитора. */
+El.prototype.getBoundingClientRect = function () {
+  return { width: (typeof VIEW_W !== 'undefined' ? VIEW_W : 960),
+           height: (typeof VIEW_H !== 'undefined' ? VIEW_H : 540) };
+};
 El.prototype.fire = function (type, ev) {
   var list = this.handlers[type] || [];
   ev = ev || { target: { closest: function () { return null; } },

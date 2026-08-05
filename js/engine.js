@@ -4,7 +4,14 @@
    ========================================================================== */
 
 var Engine = (function () {
-  var W = 960, H = 540;
+  /* Мир считается в фиксированных единицах: земля всегда на GROUND_Y = 430,
+     а «пол кадра» — на 540. Видимая область подстраивается под экран:
+     VW — сколько мира влезает по ширине, VH — высота канваса. Лишняя высота
+     уходит вверх, в небо, поэтому на вертикальном телефоне сцена занимает
+     всю рамку, а не висит полоской посередине. */
+  var BASE_W = 960, BASE_H = 540;
+  var VW = BASE_W, VH = BASE_H;
+  var voff = 0;                     /* сдвиг мира вниз = VH - BASE_H */
 
   var canvas, ctx, level, cb;
   var raf = null, last = 0, paused = false;
@@ -13,7 +20,7 @@ var Engine = (function () {
      'title' — персонаж стоит на титульном экране, 'play' — идёт уровень. */
   var scene = 'none';
   var sceneDone = null;
-  var TITLE_X = 730;
+  var TITLE_X = 0.76;      /* доля ширины кадра */
 
   var C = {};                       /* цвета из CSS-переменных */
   var P = {};                       /* палитра текущего уровня (js/content.js) */
@@ -208,12 +215,12 @@ var Engine = (function () {
 
     player.y = ny;
 
-    if (player.y > H + 120) hit();
+    if (player.y > BASE_H + 120) hit();
 
     /* --- камера --- */
-    var want = player.x - W * 0.38;
+    var want = player.x - VW * 0.38;
     cam += (want - cam) * Math.min(1, dt * 7);
-    cam = Math.max(0, Math.min(level.length - W + 120, cam));
+    cam = Math.max(0, Math.min(level.length - VW + 120, cam));
 
     checkOverlaps();
   }
@@ -265,7 +272,7 @@ var Engine = (function () {
     player.y = GROUND_Y;
     player.vx = player.vy = 0;
     player.onGround = true;
-    cam = Math.max(0, lastCp - W * 0.38);
+    cam = Math.max(0, lastCp - VW * 0.38);
     if (cb.onHit) cb.onHit();
   }
 
@@ -305,23 +312,24 @@ var Engine = (function () {
 
   /* Фон, паттерн и земля — общие для интро, титула и уровней. */
   function drawBackdrop(shift) {
-    ctx.clearRect(0, 0, W, H);
+    var top = -voff;
+    ctx.clearRect(0, top, VW, VH);
     ctx.fillStyle = C.bg;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, top, VW, VH);
 
     /* Каждый уровень красит воздух в свой цвет: стены школы, зал
        Плехановки, небо над Вышкой. Цвета приглушены, чтобы тёмный
        силуэт персонажа оставался самым контрастным пятном в кадре. */
     if (P.air) {
       ctx.fillStyle = P.air;
-      ctx.fillRect(0, 0, W, GROUND_Y);
+      ctx.fillRect(0, top, VW, GROUND_Y - top);
     }
 
     ctx.fillStyle = P.dots || C.ink12;
     var gs = 24;
     var offset = -((shift || 0) * .25) % gs;
-    for (var gx = offset; gx < W; gx += gs) {
-      for (var gy = 40; gy < GROUND_Y - 20; gy += gs) {
+    for (var gx = offset; gx < VW; gx += gs) {
+      for (var gy = top + 40; gy < GROUND_Y - 20; gy += gs) {
         ctx.fillRect(px(gx), px(gy), 4, 4);
       }
     }
@@ -331,7 +339,7 @@ var Engine = (function () {
      асфальт. Основной массив остаётся тёмным, иначе персонаж потеряется. */
   function drawGround(from, to) {
     ctx.fillStyle = C.ink;
-    ctx.fillRect(px(from), GROUND_Y, px(to - from), H - GROUND_Y);
+    ctx.fillRect(px(from), GROUND_Y, px(to - from), BASE_H - GROUND_Y);
     if (P.floor) {
       ctx.fillStyle = P.floor;
       ctx.fillRect(px(from), GROUND_Y, px(to - from), 9);
@@ -341,17 +349,18 @@ var Engine = (function () {
   /* Титульный экран: тот же мир, персонаж стоит и дышит. */
   function drawTitleScene() {
     drawBackdrop(0);
-    drawGround(0, W);
+    drawGround(0, VW);
 
     var name = (Math.floor(timeNow * 1.8) % 2) ? 'idle-squash' : 'idle';
     ctx.fillStyle = C.ink20;
-    ctx.fillRect(px(TITLE_X - 46), GROUND_Y - 6, 92, 6);
-    Sprites.draw(ctx, name, TITLE_X, GROUND_Y, false, 2.2);
+    var tx = VW * TITLE_X;
+    ctx.fillRect(px(tx - 46), GROUND_Y - 6, 92, 6);
+    Sprites.draw(ctx, name, tx, GROUND_Y, false, 2.2);
   }
 
   function drawIntroBase() {
     drawBackdrop(0);
-    drawGround(0, W);
+    drawGround(0, VW);
   }
 
   /* ------------------------------------------------------------------ */
@@ -387,6 +396,17 @@ var Engine = (function () {
       /* ---------------- школьный коридор ---------------- */
 
       case 'rail': {                         /* линия потолка или плинтуса */
+        /* На вертикальном экране кадр выше, чем на мониторе: над линией
+           потолка заливаем подвесной потолок, иначе там пустая стена.
+           Рисуем с запасом вверх — лишнее обрежет канвас. */
+        if (e.ceiling) {
+          ctx.fillStyle = col('ceiling', '#F5EDE0');
+          ctx.fillRect(px(x), px(e.y - 1200), px(e.w || 3600), 1200);
+          ctx.fillStyle = col('trimSoft', C.ink12);
+          for (var cl = 1; cl < 9; cl++) {
+            ctx.fillRect(px(x), px(e.y - cl * 46), px(e.w || 3600), 3);
+          }
+        }
         ctx.fillStyle = col('trim', C.ink20);
         ctx.fillRect(px(x), px(e.y), px(e.w || 3600), 5);
         ctx.fillStyle = col('trimSoft', C.ink12);
@@ -513,6 +533,8 @@ var Engine = (function () {
       }
 
       case 'vault': {                        /* стеклянный свод */
+        ctx.fillStyle = col('ceiling', '#E7EDEA');
+        ctx.fillRect(px(x), -1200, 414, 1236);
         ctx.fillStyle = col('glass', '#DCE8EE');
         for (var v = 0; v < 9; v++) {
           var len = 20 + Math.round(58 * Math.sin(Math.PI * v / 8));
@@ -648,7 +670,7 @@ var Engine = (function () {
     });
 
     /* земля с провалами */
-    var from = cam - 100, to = cam + W + 100;
+    var from = cam - 100, to = cam + VW + 100;
     var cursor = from;
     var pits = [];
     each('pit', function (e) { pits.push(e); });
@@ -797,6 +819,31 @@ var Engine = (function () {
   }
 
   /* ------------------------------------------------------------------ */
+  /* размер видимой области                                              */
+  /* ------------------------------------------------------------------ */
+
+  /* Канвас получает те же пропорции, что и рамка, — тогда сцена занимает её
+     целиком, без пустых полос сверху и снизу. На узком экране мир ещё и
+     приближается: 960 единиц по ширине телефона делали персонажа
+     нечитаемо мелким. */
+  function resize() {
+    if (!canvas) return;
+    var box = canvas.getBoundingClientRect
+      ? canvas.getBoundingClientRect()
+      : { width: BASE_W, height: BASE_H };
+    var w = box.width || BASE_W;
+    var h = box.height || BASE_H;
+
+    VW = w < 700 ? 620 : BASE_W;
+    VH = Math.round(Math.max(BASE_H, Math.min(1500, VW * (h / w))));
+    voff = VH - BASE_H;
+
+    canvas.width = VW;
+    canvas.height = VH;
+    ctx.imageSmoothingEnabled = false;   /* сбрасывается вместе с размером */
+  }
+
+  /* ------------------------------------------------------------------ */
   /* цикл                                                                */
   /* ------------------------------------------------------------------ */
 
@@ -806,6 +853,10 @@ var Engine = (function () {
     var dt = Math.min(.05, (ts - last) / 1000);
     last = ts;
     timeNow += dt;
+
+    /* Весь мир рисуется в своих координатах, а лишняя высота канваса
+       уходит вверх: земля всегда остаётся у нижнего края кадра. */
+    ctx.setTransform(1, 0, 0, 1, 0, voff);
 
     if (scene === 'intro') {
       if (Intro.frame(ctx, dt, C, drawIntroBase)) {
@@ -841,6 +892,9 @@ var Engine = (function () {
         keys.left = keys.right = keys.jump = false;
       });
       bindTouch();
+      resize();
+      window.addEventListener('resize', resize);
+      window.addEventListener('orientationchange', resize);
       raf = requestAnimationFrame(loop);
     },
 
@@ -896,8 +950,12 @@ var Engine = (function () {
       player.vx = player.vy = 0;
       player.onGround = true;
       lastCp = x;
-      cam = Math.max(0, x - W * .38);
+      cam = Math.max(0, x - VW * .38);
     },
+
+    /* интро рисует рамку по центру видимой области */
+    view: function () { return { w: VW, h: VH, base: BASE_H }; },
+    resize: resize,
 
     progress: function () {
       if (!level) return 0;

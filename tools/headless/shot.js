@@ -39,6 +39,7 @@ REC.on = true;
 frame();
 REC.on = false;
 
-writeFile(HL + 'frame.json', JSON.stringify(REC.ops));
-console.log('операций: ' + REC.ops.length +
+var v = Engine.view();
+writeFile(HL + 'frame.json', JSON.stringify({ w: v.w, h: v.h, ops: REC.ops }));
+console.log('кадр ' + v.w + 'x' + v.h + ', операций: ' + REC.ops.length +
             ' (уровень ' + (LEVEL + 1) + ', x=' + AT_X + ')');

@@ -62,6 +62,7 @@ var LEVELS = [
     floor:      '#BE9E72',
     trim:       '#C09A6E',
     trimSoft:   'rgba(140,105,70,.28)',
+    ceiling:    '#F7F0E6',
     glass:      '#FCF4E0',
     frame:      '#A5825C',
     metal:      '#CDB79C',
@@ -81,7 +82,7 @@ var LEVELS = [
        окно, портрет и свободный слот, куда попадает дверь или доска.
        Дальний слой едет со скоростью 0.55, поэтому его координаты сжаты —
        чтобы покрыть весь уровень, хватает диапазона до 3400. --- */
-    { t: 'deco', kind: 'rail',     x: 0, y: 56, w: 3600, far: 1 },
+    { t: 'deco', kind: 'rail',     x: 0, y: 56, w: 3600, far: 1, ceiling: 1 },
     { t: 'deco', kind: 'rail',     x: 0, y: 414, w: 3600, far: 1 },
     { t: 'deco', kind: 'window',   x: 140, y: 92, w: 86, h: 190, far: 1, repeat: 9, step: 400 },
     { t: 'deco', kind: 'radiator', x: 150, y: 366, far: 1, repeat: 9, step: 400 },
@@ -207,6 +208,7 @@ var LEVELS = [
     dots:     'rgba(70,95,85,.10)',
     floor:    '#D6DAD4',
     stone:    '#DFE5DF',
+    ceiling:  '#E9EFEB',
     mint:     '#A9CBB9',
     column:   '#B2C2CA',
     columnHi: '#CEDBE1',

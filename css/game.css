@@ -48,9 +48,9 @@ button { font: inherit; color: inherit; }
   display: block;
   width: 100%;
   height: 100%;
-  /* Канвас всегда 960x540. object-fit не даёт растянуть его по пропорциям
-     рамки — на узких экранах сцена вписывается, а не искажается. */
-  object-fit: contain;
+  /* Канвас пересчитывает свои пропорции под рамку (Engine.resize),
+     поэтому растягивать нечего — заполняет её целиком. */
+  object-fit: fill;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -454,15 +454,14 @@ button { font: inherit; color: inherit; }
    Экранные кнопки для тач-устройств
    -------------------------------------------------------------------------- */
 
+/* Кнопки стоят под рамкой, а не поверх неё: внутри они перекрывали
+   диалоговую панель и съедали последнюю строку реплики. */
 .touch {
-  position: absolute;
-  inset: auto 0 0 0;
   display: none;
+  width: min(calc(100vw - var(--gap-3)), 1180px);
   justify-content: space-between;
-  padding: var(--gap-2);
   gap: var(--gap-2);
-  z-index: 6;
-  pointer-events: none;
+  flex: none;
 }
 
 .touch.on { display: flex; }
@@ -470,18 +469,25 @@ button { font: inherit; color: inherit; }
 .touch__side { display: flex; gap: var(--gap-1); }
 
 .touch button {
-  pointer-events: auto;
-  width: calc(var(--px) * 15);
-  height: calc(var(--px) * 15);
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 17);
   border: var(--px) solid var(--ink);
-  background: rgba(241, 241, 249, .82);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: clamp(14px, 3vw, 20px);
+  font-size: clamp(18px, 5vw, 24px);
   line-height: 1;
   cursor: pointer;
   touch-action: none;
+  box-shadow: var(--shadow-sm);
   -webkit-tap-highlight-color: transparent;
+}
+
+.touch button:active {
+  background: var(--accent);
+  color: var(--bg);
+  transform: translate(var(--px), var(--px));
+  box-shadow: none;
 }
 
 .touch button:active { background: var(--accent); color: var(--bg); }
@@ -563,20 +569,46 @@ button { font: inherit; color: inherit; }
    -------------------------------------------------------------------------- */
 
 @media (max-width: 700px) {
-  body { justify-content: flex-start; padding: var(--gap-1); gap: var(--gap-1); }
-
-  .stage {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 5;
-    max-height: calc(100vh - 150px);
+  body {
+    justify-content: flex-start;
+    padding: var(--gap-1);
+    gap: var(--gap-1);
+    min-height: 100dvh;
   }
 
-  .screen__title { max-width: 14ch; }
+  /* Рамка вытягивается на всю доступную высоту, а канвас подстраивает
+     под неё свои пропорции — пустых полос сверху и снизу больше нет.
+     Вычитаем ряд кнопок и подвал. */
+  .stage {
+    width: 100%;
+    aspect-ratio: auto;
+    /* Не выше чем 1.25 ширины: на длинном экране рамка иначе вытягивается
+       так, что сверху остаётся полоса пустого воздуха. */
+    height: min(calc(100dvh - 250px), calc(100vw * 1.25));
+    min-height: 380px;
+    max-height: none;
+  }
+
+  .screen { padding: var(--gap-2); }
+  .screen__title { max-width: 11ch; font-size: clamp(28px, 11vw, 52px); }
+  .screen__sub { font-size: 16px; max-width: 30ch; }
+  .screen__kicker { font-size: 10px; }
+  .screen__actions { gap: var(--gap-1); }
+  .screen__actions .btn { flex: 1 1 100%; }
+
   .choices .btn { flex: 1 1 100%; }
+  .dialogue { left: var(--gap-1); right: var(--gap-1); bottom: var(--gap-1); }
   .dialogue__text { min-height: calc(var(--lh-body) * 4em); }
-  .foot { width: 100%; font-size: 12px; }
+
+  .hud__items { max-width: 100%; }
+
+  .foot { width: 100%; font-size: 11px; line-height: 1.2; gap: var(--px); }
   .result { grid-template-columns: 1fr; }
+}
+
+/* Совсем низкие экраны в альбомной ориентации: рамке отдаём почти всё */
+@media (max-width: 700px) and (orientation: landscape) {
+  .stage { height: calc(100dvh - 150px); min-height: 220px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -160,17 +160,19 @@
     </div>
   </section>
 
-  <!-- Тач-управление -->
-  <div class="touch" id="touch">
-    <div class="touch__side">
-      <button type="button" data-key="left" aria-label="Влево">←</button>
-      <button type="button" data-key="right" aria-label="Вправо">→</button>
-    </div>
-    <div class="touch__side">
-      <button type="button" data-key="jump" aria-label="Прыжок">↑</button>
-    </div>
-  </div>
 </main>
+
+<!-- Тач-управление вынесено из рамки: внутри неё кнопки перекрывали
+     диалоговую панель и закрывали последнюю строку реплики. -->
+<div class="touch" id="touch">
+  <div class="touch__side">
+    <button type="button" data-key="left" aria-label="Влево">←</button>
+    <button type="button" data-key="right" aria-label="Вправо">→</button>
+  </div>
+  <div class="touch__side">
+    <button type="button" data-key="jump" aria-label="Прыжок">↑</button>
+  </div>
+</div>
 
 <footer class="foot">
   <p class="foot__note">

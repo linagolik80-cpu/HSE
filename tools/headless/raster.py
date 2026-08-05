@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.join(SITE, 'tools'))
 
 from prep_sprites import read_png, write_png   # noqa: E402
 
-W, H = 960, 540
+W, H = 960, 540          # переопределяются размерами из frame.json
 BG = (241, 241, 249)
 
 
@@ -137,7 +137,14 @@ def main():
         if a.isdigit():
             scale = int(a)
 
-    ops = json.load(open(os.path.join(HERE, 'frame.json')))
+    global W, H, buf
+    data = json.load(open(os.path.join(HERE, 'frame.json')))
+    if isinstance(data, dict):
+        W, H = data['w'], data['h']
+        ops = data['ops']
+        buf = bytearray(list(BG) + [255]) * (W * H)
+    else:
+        ops = data
     for o in ops:
         alpha = o.get('a', 1)
         if o['op'] == 'rect':
